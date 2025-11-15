@@ -1,77 +1,60 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from 'react'
+import Header from './components/Header'
+import Sidebar from './components/Sidebar'
+import ChatPanel from './components/ChatPanel'
+import MainMenu from './components/MainMenu'
+import PremiumModal from './components/PremiumModal'
+import { auth } from './firebase'
 
 export default function App() {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [features, setFeatures] = useState([])
+  const [selected, setSelected] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [user, setUser] = useState(null)
+  const [search, setSearch] = useState('')
 
-  async function sendMessage() {
-    const msg = input;
-    setInput("");
+  useEffect(() => {
+    fetch('/api/features').then(r => r.json()).then(setFeatures).catch(() => {
+      // fallback: import local features if API fails
+      import('./features/aiFeatureTemplates').then(m => setFeatures(m.default || m))
+    })
 
-    setMessages((m) => [...m, { from: "you", text: msg }]);
+    const unsub = auth.onAuthStateChanged(u => {
+      setUser(u)
+      if (u) {
+        fetch('/api/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ uid: u.uid, email: u.email, displayName: u.displayName, photoURL: u.photoURL })
+        }).catch(() => {})
+      }
+    })
+    return () => unsub()
+  }, [])
 
-    const response = await fetch("http://localhost:5000/api/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: msg })
-    });
+  const filtered = features.filter(f => f.title?.toLowerCase().includes(search.toLowerCase()) || f.id?.toLowerCase().includes(search.toLowerCase()))
 
-    if (response.headers.get("content-type") === "application/json") {
-      const data = await response.json();
-      setMessages((m) => [...m, { from: "ai", text: data.answer }]);
-      return;
-    }
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let finalText = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-
-      const text = decoder.decode(value);
-      if (text.includes("[DONE]")) break;
-
-      finalText += text.replace("data:", "").trim();
-
-      setMessages((m) => {
-        const other = m.filter((x) => x.from !== "stream");
-        return [...other, { from: "stream", text: finalText }];
-      });
-    }
-
-    setMessages((m) => {
-      const other = m.filter((x) => x.from !== "stream");
-      return [...other, { from: "ai", text: finalText }];
-    });
+  function handleSelect(f) {
+    setSelected(f)
+    // dispatch global event to ChatPanel (it listens)
+    window.dispatchEvent(new CustomEvent('chatme:runFeature', { detail: f }))
   }
 
   return (
-    <div style={{ padding: 20, fontFamily: "Arial" }}>
-      <h1>My AI Assistant</h1>
+    <div className="app-shell px-4">
+      <Header onOpenMenu={() => setMenuOpen(true)} user={user} />
+      <div className="mt-4 grid grid-cols-[300px_1fr] gap-6">
+        <div>
+          <Sidebar features={filtered} onSelect={handleSelect} search={search} setSearch={setSearch} />
+        </div>
 
-      <div style={{
-        border: "1px solid #ccc",
-        padding: 10,
-        height: 400,
-        overflowY: "scroll",
-        marginBottom: 10
-      }}>
-        {messages.map((m, i) => (
-          <div key={i} style={{ margin: "10px 0" }}>
-            <b>{m.from}:</b> {m.text}
-          </div>
-        ))}
+        <div>
+          <ChatPanel user={user} />
+        </div>
       </div>
 
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Type a message..."
-        style={{ width: "70%", padding: 8 }}
-      />
-      <button onClick={sendMessage} style={{ padding: 8 }}>Send</button>
+      <MainMenu open={menuOpen} onClose={() => setMenuOpen(false)} features={features} onSelect={(f) => { handleSelect(f); setMenuOpen(false) }} />
+      <PremiumModal />
     </div>
-  );
+  )
 }
