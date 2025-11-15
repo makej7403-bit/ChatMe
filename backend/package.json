@@ -1,14 +1,19 @@
 {
-  "name": "chatme-ai-server",
+  "name": "chatme-full",
   "version": "1.0.0",
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "cd client && npm install && npm run build",
+    "postinstall": "npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "lowdb": "^6.0.1"
+    "express-rate-limit": "^7.4.2",
+    "lowdb": "^3.0.0",
+    "openai": "^4.53.1"
   }
 }
