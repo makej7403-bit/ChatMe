@@ -1,24 +1,42 @@
-// inside App.jsx (replace Upload function)
-function Upload({ kind }) {
-  const BACKEND = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
-  async function onFile(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const token = await (await import("firebase/auth")).getAuth().currentUser.getIdToken();
-    const fd = new FormData();
-    fd.append("file", file);
-    const route = kind === "image" ? "/api/upload/image" : "/api/upload/doc";
-    const r = await fetch(`${BACKEND}${route}`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-      body: fd
+import { useEffect, useState } from "react";
+import AuthButton from "./components/AuthButton";
+import ChatPanel from "./components/ChatPanel";
+import { SERVER_URL } from "./config";
+import { auth } from "./firebase";
+
+export default function App() {
+  const [token, setToken] = useState("");
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    auth.onIdTokenChanged(async (u) => {
+      setUser(u);
+      if (u) {
+        const t = await u.getIdToken();
+        setToken(t);
+      } else {
+        setToken("");
+      }
     });
-    const data = await r.json();
-    if (data.analysis) {
-      alert("Analysis result:\n\n" + data.analysis.substring(0, 2000));
-    } else {
-      alert(JSON.stringify(data));
-    }
-  }
-  return <input type="file" onChange={onFile} />;
+  }, []);
+
+  return (
+    <div className="p-4">
+      <AuthButton
+        onAuthChange={async () => {
+          if (auth.currentUser) {
+            setToken(await auth.currentUser.getIdToken());
+          }
+        }}
+      />
+
+      {user ? (
+        <ChatPanel token={token} />
+      ) : (
+        <p className="mt-4 text-gray-600">
+          Login to start chatting with AI.
+        </p>
+      )}
+    </div>
+  );
 }
