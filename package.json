@@ -4,11 +4,13 @@
   "type": "module",
   "scripts": {
     "build": "cd client && npm install && npm run build",
-    "start": "node server.js"
+    "start": "node server.js",
+    "postinstall": "echo postinstall done"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
-    "firebase-admin": "^12.0.0"
+    "firebase-admin": "^12.9.0",
+    "node-fetch": "^3.4.1"
   }
 }
