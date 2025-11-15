@@ -1,96 +1,70 @@
-// LiveCall.jsx
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 export default function LiveCall({ apiBase = "" }) {
-  const [ws, setWs] = useState(null);
-  const mediaRef = useRef(null);
+  const wsRef = useRef(null);
   const recorderRef = useRef(null);
   const [connected, setConnected] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
   const [log, setLog] = useState([]);
 
-  useEffect(() => {
-    return () => {
-      if (ws) ws.close();
-      if (recorderRef.current) recorderRef.current.stop();
-    };
-  }, []);
+  function addLog(t){ setLog(s=>[...s, t].slice(-40)); }
 
-  function addLog(line) {
-    setLog((l) => [...l, line].slice(-30));
-  }
+  async function startCall(){
+    const url = (apiBase || "") + "/ws";
+    const socket = new WebSocket(url.replace(/\/\//,"/"));
+    wsRef.current = socket;
 
-  async function startCall() {
-    const socket = new WebSocket((apiBase || "") + "/ws".replace(/\/\//g, "/"));
-    socket.onopen = () => {
-      setConnected(true);
-      addLog("WS connected");
-    };
-    socket.onmessage = (ev) => {
+    socket.onopen = ()=>{ setConnected(true); addLog("WS open"); };
+    socket.onmessage = (ev)=> {
       try {
         const m = JSON.parse(ev.data);
-        if (m.type === "reply") {
-          const text = m.payload.text;
-          addLog("AI: " + text);
-          // speak locally
-          speakText(text);
-        } else if (m.type === "transcript") {
-          addLog("Transcribed: " + (m.payload?.text || ""));
-        } else if (m.type === "error") {
-          addLog("Error: " + m.payload?.message);
-        }
-      } catch (e) {
-        addLog("MSG: " + ev.data);
-      }
+        if (m.type === "reply") { addLog("AI: "+ m.payload.text); speak(m.payload.text); }
+        else if (m.type === "transcript") addLog("Transcribed: "+ (m.payload.text||""));
+        else if (m.type === "error") addLog("Error: "+m.payload.message);
+      } catch(e){ addLog("Msg: "+ev.data); }
     };
-    socket.onclose = () => {
-      setConnected(false);
-      addLog("WS closed");
-    };
-    setWs(socket);
+    socket.onclose = ()=>{ setConnected(false); addLog("WS closed"); };
 
-    // start sending audio chunks
+    // start mic
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
     recorderRef.current = mr;
-    mr.ondataavailable = (e) => {
-      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+    mr.ondataavailable = (e)=>{
+      if (socket.readyState !== WebSocket.OPEN) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = ()=> {
         const base64 = reader.result.split(",")[1];
         socket.send(JSON.stringify({ type: "audio-chunk", payload: { audioBase64: base64, mime: "audio/webm" } }));
-        addLog("Sent audio chunk: " + base64.slice(0, 16) + "...");
+        addLog("Sent chunk");
       };
       reader.readAsDataURL(e.data);
     };
-    mr.start(800); // collect ~800ms chunks
-    addLog("Started microphone recording and streaming chunks");
+    mr.start(900); // chunk ~900ms
+    addLog("Started streaming audio");
   }
 
-  function stopCall() {
+  function stopCall(){
     if (recorderRef.current) recorderRef.current.stop();
-    if (ws) ws.close();
+    if (wsRef.current) wsRef.current.close();
     setConnected(false);
     addLog("Call stopped");
   }
 
-  function speakText(text) {
+  function speak(text){
     if (!("speechSynthesis" in window)) return;
-    const utt = new SpeechSynthesisUtterance(text);
-    utt.lang = "en-US";
+    const u = new SpeechSynthesisUtterance(text);
     window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utt);
+    window.speechSynthesis.speak(u);
   }
 
   return (
-    <div className="p-3 bg-white rounded shadow">
-      <h3 className="font-semibold mb-2">Live Call with AI</h3>
-      <div className="flex gap-2">
-        <button onClick={startCall} disabled={connected} className="px-3 py-1 bg-green-600 text-white rounded">Start Call</button>
-        <button onClick={stopCall} disabled={!connected} className="px-3 py-1 bg-red-500 text-white rounded">Stop Call</button>
+    <div className="uploader">
+      <div style={{fontWeight:600}}>Live Call</div>
+      <div style={{display:"flex", gap:8}}>
+        <button onClick={startCall} className="primary" disabled={connected}>Start Call</button>
+        <button onClick={stopCall} style={{background:"#ef4444", color:"#fff", border:"none", padding:"8px 10px", borderRadius:6}} disabled={!connected}>Stop</button>
       </div>
-      <div className="mt-2 text-sm bg-slate-50 p-2 rounded h-40 overflow-auto">
-        {log.map((l, i) => <div key={i}><small>{l}</small></div>)}
+      <div style={{marginTop:8, maxHeight:160, overflow:"auto"}}>
+        {log.map((l,i)=><div key={i} style={{fontSize:12}}>{l}</div>)}
       </div>
     </div>
   );
