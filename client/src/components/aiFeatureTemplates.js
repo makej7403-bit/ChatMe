@@ -1,4 +1,4 @@
-// Minimal metadata for 80 features (frontend uses /api/features and triggers)
+// minimal metadata (also defined on server)
 const features = [
   { id: 'chat', defaultPrompt: 'Hello, tell me about yourself.' },
   { id: 'summarize', defaultPrompt: 'Summarize this text:' },
