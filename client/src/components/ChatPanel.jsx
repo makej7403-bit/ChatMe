@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
-export default function ChatPanel() {
+export default function ChatPanel({ user, userMeta }) {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
 
@@ -12,12 +12,14 @@ export default function ChatPanel() {
     }
     window.addEventListener('chatme:runFeature', handler)
     return () => window.removeEventListener('chatme:runFeature', handler)
-  }, [])
+  }, [user, userMeta])
 
   async function runFeature(feature) {
-    setMessages(m => [...m, { role: 'system', text: `Running: ${feature.id}` }])
+    setMessages(m => [...m, { role: 'system', text: `Running: ${feature.title || feature.id}` }])
     try {
-      const res = await axios.post(`/api/ai/${feature.id}`, { prompt: feature.defaultPrompt || '' })
+      const headers = {}
+      if (user) headers['x-user-uid'] = user.uid
+      const res = await axios.post(`/api/ai/${feature.id}`, { prompt: feature.defaultPrompt || '' }, { headers })
       setMessages(m => [...m, { role: 'assistant', text: res.data.result }])
     } catch (err) {
       setMessages(m => [...m, { role: 'assistant', text: 'Error: ' + (err.response?.data?.error || err.message) }])
@@ -28,7 +30,9 @@ export default function ChatPanel() {
     if (!input) return
     setMessages(m => [...m, { role: 'user', text: input }])
     try {
-      const res = await axios.post('/api/ai/chat', { prompt: input })
+      const headers = {}
+      if (user) headers['x-user-uid'] = user.uid
+      const res = await axios.post('/api/ai/chat', { prompt: input }, { headers })
       setMessages(m => [...m, { role: 'assistant', text: res.data.result }])
     } catch (err) {
       setMessages(m => [...m, { role: 'assistant', text: 'Error: ' + (err.response?.data?.error || err.message) }])
