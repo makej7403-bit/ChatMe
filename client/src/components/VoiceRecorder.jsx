@@ -1,43 +1,42 @@
-// VoiceRecorder.jsx
-import React, { useState, useRef } from "react";
+import React, { useRef, useState } from "react";
 
 export default function VoiceRecorder({ apiBase = "" }) {
-  const [recording, setRecording] = useState(false);
-  const [mediaRec, setMediaRec] = useState(null);
+  const mediaRef = useRef(null);
+  const recorderRef = useRef(null);
   const [transcript, setTranscript] = useState("");
-  const chunksRef = useRef([]);
 
-  async function start() {
+  async function startRecording(){
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRef.current = stream;
     const mr = new MediaRecorder(stream);
-    setMediaRec(mr);
-    chunksRef.current = [];
-    mr.ondataavailable = (e) => chunksRef.current.push(e.data);
-    mr.onstop = async () => {
-      const blob = new Blob(chunksRef.current, { type: "audio/webm" });
+    recorderRef.current = mr;
+    const chunks = [];
+    mr.ondataavailable = (e)=>chunks.push(e.data);
+    mr.onstop = async ()=>{
+      const blob = new Blob(chunks, { type: "audio/webm" });
       const fd = new FormData();
       fd.append("audio", blob, "rec.webm");
       const res = await fetch(`${apiBase}/api/transcribe`, { method: "POST", body: fd });
       const j = await res.json();
       setTranscript(j.text || JSON.stringify(j));
+      alert("Transcription done. You can ask about it in chat.");
     };
     mr.start();
-    setRecording(true);
   }
 
-  function stop() {
-    if (mediaRec) mediaRec.stop();
-    setRecording(false);
+  function stopRecording(){
+    if (recorderRef.current) recorderRef.current.stop();
+    if (mediaRef.current) mediaRef.current.getTracks().forEach(t=>t.stop());
   }
 
   return (
-    <div className="p-3 bg-white rounded shadow">
-      <h3 className="font-semibold mb-2">Record Voice</h3>
-      <div>
-        <button onClick={start} disabled={recording} className="px-3 py-1 bg-green-600 text-white rounded mr-2">Start</button>
-        <button onClick={stop} disabled={!recording} className="px-3 py-1 bg-red-500 text-white rounded">Stop</button>
+    <div className="uploader">
+      <div style={{fontWeight:600}}>Voice</div>
+      <div style={{display:"flex", gap:8}}>
+        <button onClick={startRecording} className="primary">Start</button>
+        <button onClick={stopRecording} style={{background:"#ef4444", color:"#fff", border:"none", padding:"8px 10px", borderRadius:6}}>Stop</button>
       </div>
-      {transcript && <div className="mt-2"><strong>Transcript:</strong><pre className="bg-slate-50 p-2 rounded">{transcript}</pre></div>}
+      {transcript && <pre style={{marginTop:8, fontSize:12}}>{transcript}</pre>}
     </div>
   );
 }
