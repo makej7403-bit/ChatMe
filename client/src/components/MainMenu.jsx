@@ -1,23 +1,18 @@
-import React from 'react'
-
-export default function MainMenu({ open, onClose, features, onSelect }) {
-  if (!open) return null
+export default function MainMenu() {
   return (
-    <div style={{ position: 'fixed', left: 24, top: 90, width: 320, zIndex: 80 }}>
-      <div className="sidebar">
-        <div className="flex justify-between items-center mb-2">
-          <strong>Main Menu</strong>
-          <button onClick={onClose} className="text-sm text-gray-500">Close</button>
-        </div>
-        <div style={{ maxHeight: 420, overflow: 'auto' }}>
-          {features.map(f => (
-            <div key={f.id} className="feature-item p-3 rounded-md" onClick={() => onSelect(f)} style={{cursor:'pointer'}}>
-              <div className="font-medium">{f.title || f.id}</div>
-              <div className="text-xs text-gray-500">{f.defaultPrompt || ''}</div>
-            </div>
-          ))}
-        </div>
-      </div>
+    <div className="main-menu">
+      <h2>🌈 ChatMe Main Menu</h2>
+
+      <ul>
+        <li>🔥 AI Chat</li>
+        <li>✨ Image Tools</li>
+        <li>📚 Knowledge Base</li>
+        <li>💡 AI Features (30+)</li>
+        <li>🎨 Themes</li>
+        <li>⚡ Ultra Speed Mode</li>
+        <li>🛠 Developer Tools</li>
+        <li>👤 Account</li>
+      </ul>
     </div>
-  )
+  );
 }
