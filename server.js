@@ -2,8 +2,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
-import { JSONFilePreset } from "lowdb/node";
+import { Low } from "lowdb";
+import { JSONFile } from "lowdb/node";
 import OpenAI from "openai";
+import path from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -12,22 +15,28 @@ app.use(cors());
 app.use(express.json());
 
 // Rate limit
-const limiter = rateLimit({
-  windowMs: 10000,
-  max: 50
-});
-app.use(limiter);
+app.use(
+  rateLimit({
+    windowMs: 10 * 1000,
+    max: 50
+  })
+);
 
-// LowDB v6 compatible
-const db = await JSONFilePreset("./db.json", {
-  chats: [],
-  users: [],
-  settings: {}
-});
+// ⬇⬇⬇ FIXED LOWDB CODE (WORKS 100% ON RENDER)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const adapter = new JSONFile(path.join(__dirname, "db.json"));
+const db = new Low(adapter, { chats: [], users: [], settings: {} });
+
+// Make sure DB is initialized
+await db.read();
+db.data ||= { chats: [], users: [], settings: {} };
 await db.write();
+// ⬆⬆⬆ END FIXED LOWDB CODE
 
 // OpenAI
-const client = new OpenAI({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
@@ -36,13 +45,13 @@ app.post("/api/chat", async (req, res) => {
   try {
     const { message } = req.body;
 
-    const response = await client.chat.completions.create({
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
           content:
-            "You are ChatMe AI v15.0.0 created by Akin S Sokpah from Liberia. Respond extremely fast like live texting."
+            "You are ChatMe AI v15.0.0 created by Akin S Sokpah from Liberia. Respond fast like live texting."
         },
         { role: "user", content: message }
       ]
@@ -55,6 +64,7 @@ app.post("/api/chat", async (req, res) => {
       bot: reply,
       time: Date.now()
     });
+
     await db.write();
 
     res.json({ reply });
@@ -64,12 +74,6 @@ app.post("/api/chat", async (req, res) => {
 });
 
 // Serve frontend
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 app.use(express.static(path.join(__dirname, "client/dist")));
 
 app.get("*", (req, res) => {
@@ -78,6 +82,6 @@ app.get("*", (req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () =>
-  console.log(`ChatMe AI backend running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`ChatMe Backend Running on ${PORT}`);
+});
