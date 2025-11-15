@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import { streamAI } from "./ai.js";
+import db from "./db.js";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ---- Custom Answer Rule ----
+// ---- Custom Creator Answer ----
 function checkCreatorQuestion(msg) {
   const t = msg.toLowerCase();
   return (
@@ -16,16 +17,18 @@ function checkCreatorQuestion(msg) {
   );
 }
 
-// ---- Streaming Chat Endpoint ----
+// ---- Chat Endpoint with AI Streaming ----
 app.post("/api/chat", async (req, res) => {
   const userMessage = req.body.message;
 
+  // Custom creator response
   if (checkCreatorQuestion(userMessage)) {
     return res.json({
       answer: "I was created by Akin S. Sokpah from Liberia."
     });
   }
 
+  // SSE headers
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.flushHeaders();
@@ -40,5 +43,15 @@ app.post("/api/chat", async (req, res) => {
   );
 });
 
-const PORT = 5000;
+// ---- Example to store users (optional) ----
+app.post("/api/users", async (req, res) => {
+  const { username } = req.body;
+
+  db.data.users.push({ username });
+  await db.write();
+
+  res.json({ success: true, message: "User saved" });
+});
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
