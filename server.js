@@ -1,86 +1,32 @@
-// SERVER.JS — Render + Firebase Admin + Google Auth Ready
 import express from "express";
-import cors from "cors";
-import bodyParser from "body-parser";
-import dotenv from "dotenv";
 import admin from "firebase-admin";
-
-// Load .env variables
-dotenv.config();
-
-// --- Fix: Render needs full JSON inside project ---
-import serviceAccount from "./serviceAccountKey.json" assert { type: "json" };
-
-// --- Initialize Firebase Admin ---
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://fir-u-c-students-web-default-rtdb.firebaseio.com"
-});
+import cors from "cors";
 
 const app = express();
-
-// Middleware
+app.use(express.json());
 app.use(cors());
-app.use(bodyParser.json({ limit: "50mb" }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// Verify Google ID Token Middleware
-async function verifyFirebaseToken(req, res, next) {
-  const authHeader = req.headers.authorization;
+const serviceAccount = {
+  type: process.env.FIREBASE_TYPE,
+  project_id: process.env.FIREBASE_PROJECT_ID,
+  private_key_id: process.env.FIREBASE_PRIVATE_KEY_ID,
+  private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  client_email: process.env.FIREBASE_CLIENT_EMAIL,
+  client_id: process.env.FIREBASE_CLIENT_ID,
+  auth_uri: process.env.FIREBASE_AUTH_URI,
+  token_uri: process.env.FIREBASE_TOKEN_URI,
+  auth_provider_x509_cert_url: process.env.FIREBASE_AUTH_PROVIDER_CERT_URL,
+  client_x509_cert_url: process.env.FIREBASE_CLIENT_CERT_URL,
+  universe_domain: process.env.FIREBASE_UNIVERSE_DOMAIN
+};
 
-  if (!authHeader) {
-    return res.status(401).json({ error: "Missing Authorization header" });
-  }
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
 
-  const token = authHeader.split(" ")[1];
-
-  try {
-    const decoded = await admin.auth().verifyIdToken(token);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    console.error("Token verification failed:", err);
-    return res.status(401).json({ error: "Invalid or expired Firebase token" });
-  }
-}
-
-// Default Route
 app.get("/", (req, res) => {
-  res.send("🔥 ChatMe Full Backend Running on Render — Connected to Firebase");
+  res.send("Server is running on Render!");
 });
 
-// Example Protected API Route
-app.get("/profile", verifyFirebaseToken, (req, res) => {
-  res.json({
-    message: "Authenticated",
-    uid: req.user.uid,
-    email: req.user.email
-  });
-});
-
-// Example Future Chatbot Route
-app.post("/chat", verifyFirebaseToken, async (req, res) => {
-  const userMessage = req.body.message || "";
-
-  if (!userMessage) {
-    return res.status(400).json({ error: "Message missing" });
-  }
-
-  // Custom response
-  if (userMessage.toLowerCase().includes("who created you")) {
-    return res.json({
-      reply: "I was created by Akin S Sokpah from Liberia."
-    });
-  }
-
-  // Placeholder (replace with AI later)
-  return res.json({
-    reply: "AI response will be added soon."
-  });
-});
-
-// Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`✅ Server running on port ${PORT}`);
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
