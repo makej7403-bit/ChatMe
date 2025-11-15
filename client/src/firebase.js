@@ -1,5 +1,6 @@
-import { initializeApp } from 'firebase/app'
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
+// src/firebase.js
+import { initializeApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyC7cAN-mrE2PvmlQ11zLKAdHBhN7nUFjHw",
@@ -9,17 +10,8 @@ const firebaseConfig = {
   storageBucket: "fir-u-c-students-web.firebasestorage.app",
   messagingSenderId: "113569186739",
   appId: "1:113569186739:web:d8daf21059f43a79e841c6"
-}
+};
 
-const app = initializeApp(firebaseConfig)
-export const auth = getAuth(app)
-export const googleProvider = new GoogleAuthProvider()
-
-export async function signInWithGoogle() {
-  const res = await signInWithPopup(auth, googleProvider)
-  return res.user
-}
-
-export async function signOutUser() {
-  await signOut(auth)
-}
+const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
