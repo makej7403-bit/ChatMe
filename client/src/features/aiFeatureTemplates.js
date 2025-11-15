@@ -51,7 +51,7 @@ const features = [
   { id: 'prompt-engineer', title: 'Prompt Engineering', defaultPrompt: 'Improve this prompt:' },
   { id: 'persona-chat', title: 'Role-play Chat', defaultPrompt: 'Act as a friendly travel agent who:' },
   { id: 'story-gen', title: 'Story Generator', defaultPrompt: 'Write a short story about:' },
-  { id: 'poetry', title: 'Poetry Generator', defaultPrompt: 'Write a short poem about:' },
+  { id: 'poetry', title: 'Poetry Generator', defaultPrompt: 'Write poems in requested style.' },
   { id: 'lesson-plan', title: 'Lesson Plan', defaultPrompt: 'Create a lesson plan for teaching:' },
   { id: 'flashcards', title: 'Flashcards Creator', defaultPrompt: 'Create flashcards for the topic:' },
   { id: 'math-solver', title: 'Math Solver', defaultPrompt: 'Solve this math problem step-by-step:' },
