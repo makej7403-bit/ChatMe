@@ -1,3 +1,12 @@
+const features = [
+  { id: "chat", title: "General Chat", defaultPrompt: "Hello, tell me about yourself." },
+  { id: "image-qa", title: "Ask about an uploaded image", defaultPrompt: "Ask a question about the uploaded image" },
+  { id: "doc-qa", title: "Ask about a document", defaultPrompt: "Ask about the uploaded document" },
+  { id: "voice-qa", title: "Ask after voice recording", defaultPrompt: "Ask a question based on the audio" },
+  // Add more features here...
+];
+
+export default features;
 // client/src/features/aiFeatureTemplates.js
 const features = [
   // (existing 80 features — keep them if already present)
