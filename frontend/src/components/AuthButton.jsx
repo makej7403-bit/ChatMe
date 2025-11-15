@@ -1,14 +1,33 @@
-import React from 'react'
-import { signInWithGoogle, signOutUser } from '../firebase'
+import { useEffect, useState } from "react";
+import { loginGoogle, logoutGoogle, authListener } from "../firebase";
 
-export default function AuthButton({ user }) {
-  return user ? (
-    <div className="flex items-center gap-3">
-      {user.photoURL && <img src={user.photoURL} alt="avatar" className="w-8 h-8 rounded-full" />}
-      <span>{user.displayName}</span>
-      <button className="ml-2 px-3 py-1 bg-red-500 text-white rounded" onClick={() => signOutUser()}>Sign out</button>
+export default function AuthButton({ onAuthChange }) {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    return authListener((u) => {
+      setUser(u);
+      onAuthChange(u);
+    });
+  }, []);
+
+  return (
+    <div>
+      {user ? (
+        <button
+          onClick={logoutGoogle}
+          className="bg-red-500 px-4 py-2 text-white rounded-lg"
+        >
+          Logout ({user.displayName})
+        </button>
+      ) : (
+        <button
+          onClick={loginGoogle}
+          className="bg-blue-600 px-4 py-2 text-white rounded-lg"
+        >
+          Login with Google
+        </button>
+      )}
     </div>
-  ) : (
-    <button className="px-4 py-2 bg-blue-600 text-white rounded" onClick={() => signInWithGoogle()}>Sign in with Google</button>
-  )
+  );
 }
