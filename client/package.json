@@ -1,6 +1,6 @@
 {
-  "name": "chatme-ai-client",
-  "version": "15.0.0",
+  "name": "chatme-client",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
@@ -8,9 +8,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^1.7.2"
+    "axios": "^1.6.5",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "devDependencies": {
-    "vite": "^5.4.0"
+    "vite": "^5.4.21"
   }
 }
