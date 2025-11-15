@@ -1,22 +1,20 @@
-import React from 'react'
-import features from '../features/aiFeatureTemplates'
+import features from "../features/aiFeatureTemplates";
 
-export default function FeatureList({ user }) {
+export default function FeatureList() {
   return (
-    <div>
-      <h2 className="font-semibold mb-3">AI Features</h2>
-      <ul className="space-y-2 max-h-[65vh] overflow-auto">
-        {features.map(f => (
-          <li key={f.id}>
-            <button
-              className="w-full text-left p-2 rounded hover:bg-gray-100"
-              onClick={() => window.dispatchEvent(new CustomEvent('chatme:runFeature', { detail: f }))}
-            >
-              {f.id} — {f.title}
-            </button>
+    <div className="p-4">
+      <h2 className="text-lg font-bold mb-4">AI Features</h2>
+
+      <ul className="space-y-2">
+        {features.map((f, idx) => (
+          <li
+            key={idx}
+            className="p-3 bg-gray-100 rounded-lg shadow text-gray-800"
+          >
+            {f}
           </li>
         ))}
       </ul>
     </div>
-  )
+  );
 }
