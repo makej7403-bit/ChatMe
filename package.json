@@ -1,16 +1,25 @@
 {
-  "name": "chatme-full",
+  "name": "chatme",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "cd client && npm install && npm run build",
     "start": "node server.js",
-    "postinstall": "echo postinstall done"
+    "dev": "nodemon server.js",
+    "build": "cd frontend && npm install && npm run build"
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "firebase-admin": "^12.9.0",
-    "node-fetch": "^3.4.1"
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "firebase": "^11.0.2",
+    "firebase-admin": "12.6.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.67.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }
