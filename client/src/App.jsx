@@ -1,61 +1,77 @@
-import React, { useEffect, useState } from 'react'
-import AuthButton from './components/AuthButton'
-import FeatureList from './components/FeatureList'
-import ChatPanel from './components/ChatPanel'
-import PremiumModal from './components/PremiumModal'
-import { auth } from './firebase'
+import React, { useState } from "react";
 
 export default function App() {
-  const [user, setUser] = useState(null)
-  const [showPremiumModal, setShowPremiumModal] = useState(false)
-  const [userMeta, setUserMeta] = useState(null)
+  const [messages, setMessages] = useState([]);
+  const [input, setInput] = useState("");
 
-  useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (u) => {
-      setUser(u)
-      if (u) {
-        // register with backend
-        try {
-          await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              uid: u.uid,
-              email: u.email,
-              displayName: u.displayName,
-              photoURL: u.photoURL
-            })
-          })
-          const r = await fetch(`/api/users/${u.uid}`)
-          const json = await r.json()
-          setUserMeta(json)
-        } catch (err) {
-          console.error(err)
-        }
-      } else {
-        setUserMeta(null)
-      }
-    })
-    return () => unsub()
-  }, [])
+  async function sendMessage() {
+    const msg = input;
+    setInput("");
+
+    setMessages((m) => [...m, { from: "you", text: msg }]);
+
+    const response = await fetch("http://localhost:5000/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: msg })
+    });
+
+    if (response.headers.get("content-type") === "application/json") {
+      const data = await response.json();
+      setMessages((m) => [...m, { from: "ai", text: data.answer }]);
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let finalText = "";
+
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
+
+      const text = decoder.decode(value);
+      if (text.includes("[DONE]")) break;
+
+      finalText += text.replace("data:", "").trim();
+
+      setMessages((m) => {
+        const other = m.filter((x) => x.from !== "stream");
+        return [...other, { from: "stream", text: finalText }];
+      });
+    }
+
+    setMessages((m) => {
+      const other = m.filter((x) => x.from !== "stream");
+      return [...other, { from: "ai", text: finalText }];
+    });
+  }
 
   return (
-    <div className="min-h-screen p-6 bg-gray-50">
-      <header className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">ChatMe — AI Suite</h1>
-        <AuthButton user={user} />
-      </header>
+    <div style={{ padding: 20, fontFamily: "Arial" }}>
+      <h1>My AI Assistant</h1>
 
-      <main className="grid grid-cols-4 gap-6">
-        <aside className="col-span-1 bg-white p-4 rounded shadow">
-          <FeatureList user={user} userMeta={userMeta} onShowPremium={() => setShowPremiumModal(true)} />
-        </aside>
-        <section className="col-span-3 bg-white p-4 rounded shadow">
-          <ChatPanel user={user} userMeta={userMeta} />
-        </section>
-      </main>
+      <div style={{
+        border: "1px solid #ccc",
+        padding: 10,
+        height: 400,
+        overflowY: "scroll",
+        marginBottom: 10
+      }}>
+        {messages.map((m, i) => (
+          <div key={i} style={{ margin: "10px 0" }}>
+            <b>{m.from}:</b> {m.text}
+          </div>
+        ))}
+      </div>
 
-      {showPremiumModal && <PremiumModal onClose={() => setShowPremiumModal(false)} />}
+      <input
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        placeholder="Type a message..."
+        style={{ width: "70%", padding: 8 }}
+      />
+      <button onClick={sendMessage} style={{ padding: 8 }}>Send</button>
     </div>
-  )
+  );
 }
