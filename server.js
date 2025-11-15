@@ -1,27 +1,40 @@
-import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
+import express from "express";
 import cors from "cors";
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Fix __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/** -------------------------------------
+ *   1. API ROUTES (from /server folder)
+ --------------------------------------*/
+import aiRoutes from "./server/ai.js";
+import paymentRoutes from "./server/payments.js";
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "frontend/dist")));
+app.use("/api/ai", aiRoutes);
+app.use("/api/payments", paymentRoutes);
+
+/** -------------------------------------
+ *   2. SERVE CLIENT FRONTEND (Vite)
+ --------------------------------------*/
+const __dirname = path.resolve();
+const clientPath = path.join(__dirname, "client", "dist");
+
+app.use(express.static(clientPath));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend/dist/index.html"));
+  res.sendFile(path.join(clientPath, "index.html"));
 });
 
+/** -------------------------------------
+ *   3. START SERVER
+ --------------------------------------*/
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`SERVER RUNNING ON PORT: ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
