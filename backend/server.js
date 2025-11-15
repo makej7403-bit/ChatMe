@@ -10,11 +10,11 @@ import fs from "fs";
 import path from "path";
 import { WebSocketServer } from "ws";
 import features from "./features.js";
-import { getAIReply } from "./openai.js";
+import { getAIReply, streamChat } from "./openai.js";
 
 dotenv.config();
 
-// Setup Firebase Admin from env variables (private key needs newlines)
+// ---------- Firebase Admin init ----------
 const serviceAccount = {
   type: process.env.FIREBASE_TYPE || "service_account",
   project_id: process.env.FIREBASE_PROJECT_ID,
@@ -35,52 +35,61 @@ try {
     databaseURL: process.env.FIREBASE_DATABASE_URL || ""
   });
   console.log("✅ Firebase Admin initialized.");
-} catch (e) {
-  console.warn("⚠️ Firebase Admin init warning — check envs:", e.message);
+} catch (err) {
+  console.warn("⚠ Firebase Admin init error (check envs):", err && err.message);
 }
 
-// Create uploads dir if not exists
+// Firestore instance
+const db = admin.firestore();
+
+// ---------- Uploads dir & multer ----------
 const uploadsDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir);
 
-// multer config
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),
   filename: (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`)
 });
-const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 60 * 1024 * 1024 } });
 
 const app = express();
 app.use(cors());
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true }));
 
-// rate limiter
-const limiter = rateLimit({ windowMs: 1000 * 60, max: 80 });
+// rate limiter to avoid abuse
+const limiter = rateLimit({ windowMs: 60 * 1000, max: 120 });
 app.use(limiter);
 
-// Middleware to verify firebase id token
+// Helper: build public base URL (Render sets host properly)
+function getBaseUrl(req) {
+  const forwardedHost = req.get("x-forwarded-host") || req.get("host");
+  const protocol = req.get("x-forwarded-proto") || req.protocol;
+  return `${protocol}://${forwardedHost}`;
+}
+
+// Middleware: verify Firebase token from Authorization: Bearer <token>
 async function verifyFirebaseToken(req, res, next) {
-  const authHeader = req.headers.authorization || "";
-  const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
-  if (!token) return res.status(401).json({ error: "Missing token" });
   try {
+    const authHeader = req.headers.authorization || "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
+    if (!token) return res.status(401).json({ error: "Missing token" });
     const decoded = await admin.auth().verifyIdToken(token);
     req.user = decoded;
     next();
   } catch (err) {
     console.error("Token verify failed:", err && err.message);
-    res.status(401).json({ error: "Invalid or expired token" });
+    return res.status(401).json({ error: "Invalid token", details: err.message });
   }
 }
 
 // Health
 app.get("/health", (req, res) => res.json({ ok: true }));
 
-// Return features list
+// List features
 app.get("/api/features", (req, res) => res.json({ features }));
 
-// Verify token endpoint (for frontend convenience)
+// Verify token convenience endpoint
 app.post("/api/verifyToken", async (req, res) => {
   const { token } = req.body;
   if (!token) return res.status(400).json({ error: "token required" });
@@ -92,64 +101,163 @@ app.post("/api/verifyToken", async (req, res) => {
   }
 });
 
-// Chat endpoint (protected)
+// Non-streaming chat (keeps compatibility)
 app.post("/api/chat", verifyFirebaseToken, async (req, res) => {
   const userMessage = req.body.message || "";
   if (!userMessage) return res.status(400).json({ error: "message required" });
 
-  // special creator response
+  // Creator response
   if (/who (created|made) (you|this)/i.test(userMessage)) {
-    return res.json({ reply: "I was created by Akin S. Sokpah from Liberia." });
+    const reply = "I was created by Akin S. Sokpah from Liberia.";
+    // save to Firestore
+    await saveChat(req.user.uid, userMessage, reply);
+    return res.json({ reply });
   }
 
-  // call OpenAI wrapper
   try {
     const aiReply = await getAIReply([{ role: "user", content: userMessage }]);
+    // Save to Firestore
+    await saveChat(req.user.uid, userMessage, aiReply);
     res.json({ reply: aiReply });
   } catch (err) {
-    console.error("AI error:", err.message || err);
+    console.error("AI error:", err && err.message);
     res.status(500).json({ error: "AI error", details: err.message });
   }
 });
 
-// Upload endpoints
-app.post("/api/upload/image", verifyFirebaseToken, upload.single("file"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "file missing" });
-  res.json({ ok: true, path: `/uploads/${req.file.filename}`, filename: req.file.filename });
+// Streaming chat via Server-Sent Events (SSE)
+// Client should POST JSON { message: "..."} with Bearer token in Authorization header
+app.post("/api/chat/stream", verifyFirebaseToken, async (req, res) => {
+  const userMessage = req.body.message || "";
+  if (!userMessage) return res.status(400).json({ error: "message required" });
+
+  // Creator question shortcut
+  if (/who (created|made) (you|this)/i.test(userMessage)) {
+    // SSE headers then send JSON as a single event
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("Connection", "keep-alive");
+    res.flushHeaders();
+    res.write(`data: ${JSON.stringify({ chunk: "I was created by Akin S. Sokpah from Liberia." })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    // Save to Firestore
+    await saveChat(req.user.uid, userMessage, "I was created by Akin S. Sokpah from Liberia.");
+    return res.end();
+  }
+
+  // set SSE headers
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache, no-transform");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  try {
+    // Stream from OpenAI
+    const stream = await streamChat([{ role: "user", content: userMessage }]);
+
+    let final = "";
+    for await (const chunk of stream) {
+      // The chunk may include choices[].delta.content for streaming
+      try {
+        const text = chunk.choices?.[0]?.delta?.content || "";
+        if (text) {
+          final += text;
+          // send SSE chunk as JSON for easier parsing on client
+          res.write(`data: ${JSON.stringify({ chunk: text })}\n\n`);
+        }
+      } catch (e) {
+        // ignore parse errors of chunk
+      }
+    }
+
+    // end signal
+    res.write("data: [DONE]\n\n");
+    await saveChat(req.user.uid, userMessage, final);
+    res.end();
+  } catch (err) {
+    console.error("Streaming error:", err && err.message);
+    res.write(`data: ${JSON.stringify({ error: "stream error", details: err.message })}\n\n`);
+    res.write("data: [DONE]\n\n");
+    res.end();
+  }
 });
 
-app.post("/api/upload/doc", verifyFirebaseToken, upload.single("file"), (req, res) => {
+// Upload image then run image analysis
+app.post("/api/upload/image", verifyFirebaseToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "file missing" });
-  res.json({ ok: true, path: `/uploads/${req.file.filename}`, filename: req.file.filename });
+
+  // Build public reachable URL for the uploaded file
+  const base = getBaseUrl(req);
+  const publicUrl = `${base}/uploads/${req.file.filename}`;
+
+  // Simple image analysis prompt using OpenAI chat (you can make it richer)
+  const prompt = `You are an assistant that analyzes images. Describe the content of the image at this URL in detail, mention objects, people, clothing, text in the image (if any), colors, possible context, and answer any likely questions about it. Image URL: ${publicUrl}`;
+
+  try {
+    const analysis = await getAIReply([{ role: "user", content: prompt }]);
+    // Save a short chat record (user asked to analyze an image)
+    const userMessage = `Analyze image: ${req.file.filename}`;
+    await saveChat(req.user.uid, userMessage, analysis, { type: "image", file: req.file.filename, publicUrl });
+    res.json({ ok: true, filename: req.file.filename, publicUrl, analysis });
+  } catch (err) {
+    console.error("Image analyze error:", err && err.message);
+    res.status(500).json({ error: "analysis_failed", details: err.message });
+  }
 });
 
-app.post("/api/upload/voice", verifyFirebaseToken, upload.single("file"), (req, res) => {
+// Generic doc/voice upload (keeps earlier endpoints)
+app.post("/api/upload/doc", verifyFirebaseToken, upload.single("file"), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: "file missing" });
-  res.json({ ok: true, path: `/uploads/${req.file.filename}`, filename: req.file.filename });
+  const base = getBaseUrl(req);
+  res.json({ ok: true, filename: req.file.filename, publicUrl: `${base}/uploads/${req.file.filename}` });
+});
+app.post("/api/upload/voice", verifyFirebaseToken, upload.single("file"), async (req, res) => {
+  if (!req.file) return res.status(400).json({ error: "file missing" });
+  const base = getBaseUrl(req);
+  res.json({ ok: true, filename: req.file.filename, publicUrl: `${base}/uploads/${req.file.filename}` });
 });
 
-// Serve uploaded files (careful: public)
+// Serve uploaded files (public)
 app.use("/uploads", express.static(uploadsDir));
 
-// Simple admin-only route (example)
+// ADMIN demo endpoint
 app.get("/admin/stats", verifyFirebaseToken, async (req, res) => {
-  // in real app, check admin claim
-  res.json({ message: "admin stats placeholder", user: req.user || null });
+  // NOTE: production should check custom claim admin:true
+  const user = req.user || {};
+  res.json({ ok: true, user });
 });
 
-// START HTTP server
+// ---------- Firestore helper: save chat ----------
+async function saveChat(uid, userMessage, aiReply, extras = {}) {
+  try {
+    if (!uid) return;
+    const col = db.collection("users").doc(uid).collection("chats");
+    const doc = col.doc(); // auto id
+    await doc.set({
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      userMessage,
+      aiReply,
+      ...extras
+    });
+    return doc.id;
+  } catch (e) {
+    console.warn("saveChat error:", e && e.message);
+  }
+}
+
+// Start HTTP server
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => console.log(`✅ Backend listening on ${PORT}`));
 
-// WebSocket server for live-call signaling (very lightweight)
+// Lightweight WebSocket server for signaling (WebRTC) - basic broadcast
 const wss = new WebSocketServer({ server, path: "/ws" });
 wss.on("connection", (socket) => {
-  console.log("WS connection");
+  console.log("WS client connected");
   socket.on("message", (msg) => {
-    // Simple broadcast to all other clients
-    wss.clients.forEach((c) => {
-      if (c !== socket && c.readyState === 1) c.send(msg);
-    });
+    // broadcast to others
+    for (const client of wss.clients) {
+      if (client !== socket && client.readyState === 1) client.send(msg);
+    }
   });
-  socket.on("close", () => console.log("WS closed"));
+  socket.on("close", () => console.log("WS client disconnected"));
 });
