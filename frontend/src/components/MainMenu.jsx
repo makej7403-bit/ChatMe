@@ -1,23 +1,22 @@
-import React from "react";
+export default function MainMenu({ onSelect }) {
+  const items = [
+    { name: "Chat AI", value: "chat" },
+    { name: "Upload Image", value: "image" },
+    { name: "Upload Document", value: "doc" },
+    { name: "Voice Recorder", value: "voice" },
+    { name: "Live Call", value: "call" },
+    { name: "Premium", value: "premium" }
+  ];
 
-export default function MainMenu({ features, onSelect }) {
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12 }}>
-      {features.map((f) => (
+    <div className="grid grid-cols-2 gap-4 p-4">
+      {items.map((item) => (
         <button
-          key={f.id}
-          onClick={() => onSelect(f.id)}
-          style={{
-            padding: 16,
-            borderRadius: 12,
-            background: "linear-gradient(135deg,#7b1fa2,#03a9f4)",
-            color: "#fff",
-            border: "none",
-            boxShadow: "0 6px 14px rgba(0,0,0,0.12)",
-            cursor: "pointer"
-          }}
+          key={item.value}
+          className="p-4 bg-blue-100 hover:bg-blue-200 rounded-xl shadow text-center"
+          onClick={() => onSelect(item.value)}
         >
-          <div style={{ fontWeight: 700 }}>{f.title}</div>
+          {item.name}
         </button>
       ))}
     </div>
