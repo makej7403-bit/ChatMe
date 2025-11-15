@@ -1,5 +1,74 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+body {
+  margin: 0;
+  background: linear-gradient(135deg, #7f00ff, #e100ff);
+  font-family: Arial, sans-serif;
+  color: #fff;
+}
 
-html, body, #root { height: 100%; }
+.app-container {
+  padding: 20px;
+}
+
+.menu-btn {
+  font-size: 28px;
+  background: #00000040;
+  color: white;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 10px;
+}
+
+.main-menu {
+  background: #ffffff20;
+  padding: 15px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+
+.chatbox {
+  background: #ffffff15;
+  padding: 20px;
+  border-radius: 20px;
+}
+
+.messages {
+  height: 60vh;
+  overflow-y: auto;
+  margin-bottom: 10px;
+}
+
+.msg-you {
+  text-align: right;
+  background: #00000040;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 4px;
+}
+
+.msg-ai {
+  text-align: left;
+  background: #ffffff30;
+  padding: 10px;
+  border-radius: 10px;
+  margin: 4px;
+}
+
+.input-area {
+  display: flex;
+  gap: 10px;
+}
+
+input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+}
+
+button {
+  padding: 10px 15px;
+  background: #00fffb;
+  color: black;
+  border: none;
+  border-radius: 10px;
+}
