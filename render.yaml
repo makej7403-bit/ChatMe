@@ -1,0 +1,28 @@
+services:
+  # ===========================
+  # BACKEND (Node + Express)
+  # ===========================
+  - name: chatme-backend
+    type: web
+    env: node
+    rootDir: backend
+    buildCommand: "npm install"
+    startCommand: "node server.js"
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: FRONTEND_URL
+        value: https://chatme-frontend.onrender.com
+
+  # ===========================
+  # FRONTEND (React + Vite)
+  # ===========================
+  - name: chatme-frontend
+    type: web
+    env: static
+    rootDir: frontend
+    buildCommand: "npm install && npm run build"
+    staticPublishPath: "dist"
+    envVars:
+      - key: VITE_BACKEND_URL
+        value: https://chatme-backend.onrender.com
