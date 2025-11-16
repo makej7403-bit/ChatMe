@@ -1,28 +1,16 @@
-import { Search, Mic, Image } from "lucide-react";
+import React from "react";
 
-export function Header({ onSearch }) {
+export default function Header() {
   return (
-    <div className="flex items-center justify-between w-full border-b border-[#1f2024] px-6 py-4 bg-[#131417]">
-      
-      {/* Search bar */}
-      <div className="flex items-center gap-3 bg-[#1c1d21] px-4 py-3 rounded-2xl w-full max-w-3xl">
-        <Search size={18} className="opacity-60" />
-        <input
-          type="text"
-          placeholder="Ask anything…"
-          onKeyDown={(e) => e.key === "Enter" && onSearch(e.target.value)}
-          className="bg-transparent w-full outline-none"
-        />
-        <Mic size={18} className="opacity-60" />
-        <Image size={18} className="opacity-60" />
-      </div>
+    <div className="w-full">
 
-      {/* Right buttons */}
-      <div className="flex items-center gap-4 ml-4">
-        <button className="px-4 py-2 bg-[#1c1d21] rounded-xl text-sm hover:bg-[#25262b]">
-          Upgrade
-        </button>
-      </div>
+      {/* Search Input Box */}
+      <input
+        type="text"
+        placeholder="Ask anything…"
+        className="w-full h-11 px-4 text-white bg-white/5 border border-white/10 rounded-xl outline-none focus:border-white/30 transition"
+      />
+
     </div>
   );
 }
