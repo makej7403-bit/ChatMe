@@ -1,28 +1,28 @@
 import React from "react";
+import TopNav from "./components/TopNav";
 import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import Chat from "./components/Chat";
+import ChatPanel from "./components/ChatPanel";
+import MainMenu from "./components/MainMenu";
 
 export default function App() {
   return (
-    <div className="w-screen h-screen flex bg-[#0d0d0d] text-white overflow-hidden">
+    <div className="w-full h-screen bg-gradient-to-b from-black to-gray-900 text-white flex">
 
-      {/* Sidebar */}
-      <div className="hidden md:flex w-[250px] bg-black/40 border-r border-white/10 backdrop-blur-xl">
-        <Sidebar />
-      </div>
+      {/* Top Navigation */}
+      <TopNav />
 
-      {/* Main Content */}
-      <div className="flex flex-col flex-1 h-full">
+      {/* Layout wrapper with padding to avoid top bar overlap */}
+      <div className="pt-20 w-full flex">
 
-        {/* Top Header (Search bar like Perplexity) */}
-        <div className="h-[65px] border-b border-white/10 bg-black/30 backdrop-blur-xl flex items-center px-6">
-          <Header />
+        {/* Sidebar */}
+        <div className="hidden md:block">
+          <Sidebar />
         </div>
 
-        {/* Main Chat Section */}
-        <div className="flex-1 overflow-y-auto bg-[#0d0d0d]">
-          <Chat />
+        {/* Main Content */}
+        <div className="flex-1 overflow-y-auto px-4 md:px-10">
+          <ChatPanel />
+          <MainMenu />
         </div>
 
       </div>
