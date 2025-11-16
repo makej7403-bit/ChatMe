@@ -1,98 +1,74 @@
-import React, { useState, useRef, useEffect } from "react";
-import SmartSuggestions from "./SmartSuggestions";
-import { Send } from "lucide-react";
+import React, { useState } from "react";
+import TypingDots from "./TypingDots";
+import AIMessage from "./AIMessage";
 
 export default function ChatPanel() {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const messagesEndRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
-  // Auto-scroll chat to the bottom
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  // Send message to backend
-  const sendMessage = async () => {
+  async function sendMessage() {
     if (!input.trim()) return;
 
-    const userMessage = { role: "user", content: input };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const userMsg = { role: "user", text: input };
+    setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    setLoading(true);
 
-    try {
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
-      });
+    // --- CALL YOUR BACKEND ---
+    const res = await fetch("/api/ai", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt: userMsg.text }),
+    });
 
-      const data = await res.json();
+    const data = await res.json();
 
-      const aiMessage = { role: "assistant", content: data.reply };
-      setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
-      console.error(error);
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: "⚠️ Error connecting to server." },
-      ]);
-    }
-  };
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        text: data.answer,
+        sources: data.sources || [],
+      },
+    ]);
 
-  // Handle enter key
-  const handleKeyPress = (e) => {
-    if (e.key === "Enter") sendMessage();
-  };
+    setLoading(false);
+  }
 
   return (
-    <div className="flex flex-col h-full w-full bg-[#0d1117] text-gray-100 px-4 pt-6">
-      
-      {/* ======================= */}
-      {/*  PERPLEXITY STYLE CARDS */}
-      {/* ======================= */}
-      {messages.length === 0 && (
-        <SmartSuggestions onSelect={(prompt) => setInput(prompt)} />
-      )}
+    <div className="h-full overflow-y-auto p-8 flex flex-col">
 
-      {/* ======================= */}
-      {/* CHAT WINDOW DISPLAY     */}
-      {/* ======================= */}
-      <div className="flex-1 overflow-y-auto mt-6 space-y-4 pr-2">
-        {messages.map((msg, index) => (
-          <div
-            key={index}
-            className={`p-4 max-w-2xl rounded-2xl ${
-              msg.role === "user"
-                ? "bg-blue-600 ml-auto text-white"
-                : "bg-[#1b2433] border border-[#2a3142] text-gray-200"
-            }`}
-          >
-            {msg.content}
-          </div>
-        ))}
+      {/* Messages */}
+      {messages.map((msg, i) => (
+        <div key={i} className="my-2 w-full">
+          {msg.role === "user" ? (
+            <div className="text-gray-300 bg-[#1c2432] px-4 py-3 rounded-xl inline-block">
+              {msg.text}
+            </div>
+          ) : (
+            <AIMessage text={msg.text} sources={msg.sources} />
+          )}
+        </div>
+      ))}
 
-        <div ref={messagesEndRef} />
-      </div>
+      {/* Typing Indicator */}
+      {loading && <TypingDots />}
 
-      {/* ======================= */}
-      {/* INPUT AREA              */}
-      {/* ======================= */}
-      <div className="flex items-center gap-3 mt-4 mb-6 bg-[#121722] border border-[#1f2633] px-4 py-3 rounded-2xl">
+      {/* Input Box */}
+      <div className="flex mt-6">
         <input
+          className="flex-1 bg-[#1a2330] border border-[#2c3547] rounded-xl px-4 py-3 outline-none text-gray-200"
+          placeholder="Ask anything…"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyPress={handleKeyPress}
-          placeholder="Ask anything..."
-          className="flex-1 bg-transparent outline-none text-gray-100 placeholder-gray-500"
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-
         <button
           onClick={sendMessage}
-          className="bg-blue-600 hover:bg-blue-700 transition p-2 rounded-xl"
+          className="ml-3 bg-blue-600 hover:bg-blue-700 px-5 rounded-xl"
         >
-          <Send size={20} />
+          Send
         </button>
       </div>
     </div>
