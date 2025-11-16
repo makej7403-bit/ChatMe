@@ -1,40 +1,24 @@
-import path from "path";
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-
-dotenv.config();
+const path = require("path");
+const express = require("express");
+const cors = require("cors");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-/** -------------------------------------
- *   1. API ROUTES (from /server folder)
- --------------------------------------*/
-import aiRoutes from "./server/ai.js";
-import paymentRoutes from "./server/payments.js";
+// API routes
+app.use("/api/ai", require("./backend/routes/ai.js")); 
+app.use("/api/features", require("./backend/routes/feature.js"));
 
-app.use("/api/ai", aiRoutes);
-app.use("/api/payments", paymentRoutes);
-
-/** -------------------------------------
- *   2. SERVE CLIENT FRONTEND (Vite)
- --------------------------------------*/
-const __dirname = path.resolve();
-const clientPath = path.join(__dirname, "client", "dist");
-
-app.use(express.static(clientPath));
+// Serve frontend
+app.use(express.static(path.join(__dirname, "client", "dist")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(clientPath, "index.html"));
+  res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
 });
 
-/** -------------------------------------
- *   3. START SERVER
- --------------------------------------*/
-const PORT = process.env.PORT || 10000;
+// Start
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log("Server running on port " + PORT);
 });
