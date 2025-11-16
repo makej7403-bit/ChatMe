@@ -1,42 +1,57 @@
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
 
-export default function VoiceRecorder({ apiBase = "" }) {
-  const mediaRef = useRef(null);
-  const recorderRef = useRef(null);
-  const [transcript, setTranscript] = useState("");
+const VoiceRecorder = ({ onText }) => {
+  const [recording, setRecording] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunks = useRef([]);
 
-  async function startRecording(){
+  const startRecording = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    mediaRef.current = stream;
-    const mr = new MediaRecorder(stream);
-    recorderRef.current = mr;
-    const chunks = [];
-    mr.ondataavailable = (e)=>chunks.push(e.data);
-    mr.onstop = async ()=>{
-      const blob = new Blob(chunks, { type: "audio/webm" });
-      const fd = new FormData();
-      fd.append("audio", blob, "rec.webm");
-      const res = await fetch(`${apiBase}/api/transcribe`, { method: "POST", body: fd });
-      const j = await res.json();
-      setTranscript(j.text || JSON.stringify(j));
-      alert("Transcription done. You can ask about it in chat.");
-    };
-    mr.start();
-  }
+    mediaRecorderRef.current = new MediaRecorder(stream);
 
-  function stopRecording(){
-    if (recorderRef.current) recorderRef.current.stop();
-    if (mediaRef.current) mediaRef.current.getTracks().forEach(t=>t.stop());
-  }
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      audioChunks.current.push(e.data);
+    };
+
+    mediaRecorderRef.current.onstop = async () => {
+      const audioBlob = new Blob(audioChunks.current, { type: "audio/webm" });
+      audioChunks.current = [];
+
+      const form = new FormData();
+      form.append("audio", audioBlob);
+
+      const res = await fetch(import.meta.env.VITE_API_URL + "/voice", {
+        method: "POST",
+        body: form
+      });
+
+      const data = await res.json();
+      onText(data.text);
+    };
+
+    mediaRecorderRef.current.start();
+    setRecording(true);
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current.stop();
+    setRecording(false);
+  };
 
   return (
-    <div className="uploader">
-      <div style={{fontWeight:600}}>Voice</div>
-      <div style={{display:"flex", gap:8}}>
-        <button onClick={startRecording} className="primary">Start</button>
-        <button onClick={stopRecording} style={{background:"#ef4444", color:"#fff", border:"none", padding:"8px 10px", borderRadius:6}}>Stop</button>
-      </div>
-      {transcript && <pre style={{marginTop:8, fontSize:12}}>{transcript}</pre>}
-    </div>
+    <button
+      onClick={recording ? stopRecording : startRecording}
+      style={{
+        background: recording ? "#b42323" : "#0d2b4c",
+        color: "white",
+        padding: "12px 18px",
+        borderRadius: 40,
+        border: "none",
+      }}
+    >
+      {recording ? "Stop" : "🎤 Voice"}
+    </button>
   );
-}
+};
+
+export default VoiceRecorder;
