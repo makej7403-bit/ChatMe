@@ -1,45 +1,26 @@
-import { useState } from "react";
-import { SERVER_URL } from "../config";
+// frontend/src/components/ChatPanel.jsx
+import Chat from "./Chat";
 
-export default function ChatPanel({ token }) {
-  const [msg, setMsg] = useState("");
-  const [reply, setReply] = useState("");
-
-  async function sendMessage() {
-    const res = await fetch(`${SERVER_URL}/api/ai/chat`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({ message: msg })
-    });
-
-    const data = await res.json();
-    setReply(data.reply);
-  }
-
+export default function ChatPanel() {
   return (
-    <div className="mt-6">
-      <textarea
-        className="border p-2 w-full"
-        rows={3}
-        value={msg}
-        onChange={(e) => setMsg(e.target.value)}
-      />
+    <div className="w-full h-full flex flex-col items-center overflow-y-auto relative">
 
-      <button
-        onClick={sendMessage}
-        className="bg-green-600 px-4 py-2 text-white mt-2 rounded-lg"
-      >
-        Send
-      </button>
+      {/* Chat Container */}
+      <div className="w-full max-w-3xl px-6 py-6 flex-1 overflow-y-auto">
+        <Chat />
+      </div>
 
-      {reply && (
-        <div className="mt-4 p-4 bg-gray-100 rounded">
-          <strong>AI:</strong> {reply}
+      {/* Message Input Bar */}
+      <div className="w-full flex justify-center p-4 bg-white border-t shadow-lg">
+        <div className="max-w-3xl w-full">
+          <input
+            id="messageInput"
+            type="text"
+            placeholder="Ask anything..."
+            className="w-full px-4 py-3 rounded-xl border bg-[#f2f2f2] outline-none"
+          />
         </div>
-      )}
+      </div>
     </div>
   );
 }
