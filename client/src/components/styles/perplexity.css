@@ -1,0 +1,151 @@
+/* FullTask Perplexity-style CSS - put in client/src/styles/perplexity.css */
+
+/* Reset + root */
+:root{
+  --bg: #fbfbfb;
+  --muted: #8b8f95;
+  --accent: #19323c;
+  --pill: #eef0ef;
+  --glass: rgba(255,255,255,0.6);
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+  margin:0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: linear-gradient(180deg, #fbfbfb 0%, #ffffff 100%);
+  color:var(--accent);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
+
+/* Shell */
+.ft-shell{
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  background:
+    radial-gradient(circle at 10% 20%, rgba(25,50,60,0.02) 0 8%, transparent 30%),
+    radial-gradient(circle at 90% 80%, rgba(25,50,60,0.02) 0 8%, transparent 30%),
+    var(--bg);
+}
+
+/* Header */
+.ft-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:18px 20px 0;
+  height:72px;
+}
+.ft-header .brand{
+  text-align:center;
+  flex:1;
+}
+.brand-name{
+  display:block;
+  font-weight:700;
+  font-size:20px;
+  letter-spacing: -.5px;
+}
+.brand-sub{
+  display:block;
+  font-size:11px;
+  color:var(--muted);
+}
+
+/* icons */
+.icon-btn{
+  width:44px;
+  height:44px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:transparent;
+  border:none;
+  color:var(--accent);
+}
+.icon-btn:active{transform:translateY(1px)}
+
+/* Main hero */
+.ft-main{flex:1; display:flex; align-items:center; justify-content:center; padding:10vh 20px;}
+.ft-hero{width:100%; max-width:920px; display:flex; justify-content:center;}
+.ft-hero-inner{display:flex; flex-direction:column; align-items:center; gap:20px; text-align:center; padding:40px 20px 120px;}
+.ft-logo-mark{background: linear-gradient(180deg, rgba(25,50,60,0.03), rgba(25,50,60,0.01)); border-radius:14px; padding:14px}
+.ft-tagline{font-size:34px; margin:0; font-weight:700; color:var(--accent)}
+.ft-sub{margin:0; color:var(--muted); font-size:14px}
+
+/* Search bar pill */
+.ft-search-wrap{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width: min(780px, 92%);
+  background:var(--pill);
+  border-radius:999px;
+  padding:10px;
+  box-shadow: 0 6px 20px rgba(20,30,40,0.06);
+}
+.ft-upload-btn, .ft-voice-btn{
+  background:transparent; border:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:10px;
+}
+.ft-search-input{
+  flex:1;
+  border:0;
+  outline:none;
+  font-size:16px;
+  background:transparent;
+  padding:8px 12px;
+  color:var(--accent);
+}
+
+/* features row */
+.ft-feature-row{display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; justify-content:center}
+.ft-feature{
+  background:white;
+  padding:8px 14px;
+  border-radius:10px;
+  border:1px solid rgba(20,30,40,0.04);
+  color:var(--muted);
+  font-size:13px;
+}
+
+/* bottom navigation */
+.ft-bottom-nav{
+  position:fixed;
+  left:0; right:0; bottom:10px;
+  display:flex;
+  justify-content:center;
+  gap:28px;
+  padding:12px 20px;
+  pointer-events:auto;
+}
+.bottom-icon{
+  width:54px;
+  height:54px;
+  border-radius:14px;
+  border:1px solid rgba(20,30,40,0.06);
+  background: white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow: 0 6px 14px rgba(20,30,40,0.06);
+  color:var(--accent);
+  border-radius:999px;
+}
+
+/* responsive */
+@media (min-width: 900px){
+  .ft-tagline{font-size:48px}
+  .ft-sub{font-size:16px}
+}
+
+/* small mobile tweak */
+@media (max-width:420px){
+  .ft-search-input{font-size:15px}
+  .ft-tagline{font-size:28px}
+}
