@@ -1,59 +1,31 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Home,
-  History,
-  Bookmark,
-  Settings,
-  Menu,
-  X,
-} from "lucide-react";
+import React from "react";
 
-export function Sidebar() {
-  const [open, setOpen] = useState(true);
-
+export default function Sidebar() {
   return (
-    <motion.div
-      animate={{ width: open ? 260 : 80 }}
-      transition={{ duration: 0.25 }}
-      className="h-full bg-[#131417] border-r border-[#1f2024] flex flex-col"
-    >
-      {/* Top */}
-      <div className="flex items-center justify-between p-4">
-        {open && (
-          <h1 className="text-lg font-semibold tracking-wide">
-            FullTask AI  
-          </h1>
-        )}
-        <button
-          onClick={() => setOpen(!open)}
-          className="p-2 hover:bg-[#1f2024] rounded-xl"
-        >
-          {open ? <X size={20} /> : <Menu size={20} />}
-        </button>
+    <div className="flex flex-col w-full h-full p-4 text-white">
+
+      <h1 className="text-xl font-semibold mb-6 opacity-70">
+        FullTask AI Tutor Pro
+      </h1>
+
+      <button className="mb-3 text-left px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition">
+        + New Chat
+      </button>
+
+      <div className="mt-6 opacity-60 text-sm">
+        History
       </div>
 
-      {/* Menu */}
-      <div className="flex flex-col gap-1 px-3 mt-2">
-        <SidebarButton icon={<Home size={18} />} label="Home" open={open} />
-        <SidebarButton icon={<History size={18} />} label="History" open={open} />
-        <SidebarButton icon={<Bookmark size={18} />} label="Saved" open={open} />
-        <SidebarButton icon={<Settings size={18} />} label="Settings" open={open} />
+      <div className="flex-1 mt-3 space-y-2 text-white/70 text-sm">
+        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Today</p>
+        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Yesterday</p>
+        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Last 7 days</p>
       </div>
 
-      {/* Bottom */}
-      <div className="mt-auto p-4 text-xs opacity-50">
-        {open && "v1.0 — FullTask AI Tutor Pro"}
+      <div className="mt-auto opacity-60 text-sm">
+        Settings
       </div>
-    </motion.div>
-  );
-}
 
-function SidebarButton({ icon, label, open }) {
-  return (
-    <button className="flex items-center gap-3 p-3 rounded-xl hover:bg-[#1f2024] w-full text-left">
-      {icon}
-      {open && <span className="text-sm">{label}</span>}
-    </button>
+    </div>
   );
 }
