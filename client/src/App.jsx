@@ -3,7 +3,7 @@ import Header from './components/Header';
 import ChatInput from './components/ChatInput';
 import ChatView from './components/ChatView';
 import BottomNav from './components/BottomNav';
-
+import LiveCall from "./components/LiveCall";
 const App = () => {
   const [messages, setMessages] = useState([]);
 
