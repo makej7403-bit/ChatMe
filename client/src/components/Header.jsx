@@ -1,20 +1,29 @@
-import React from 'react';
-import AuthButton from './AuthButton';
+import React from "react";
 
-export default function Header({ onOpenMenu, user }){
+export default function Header() {
   return (
-    <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow">
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center text-white font-bold">CM</div>
-        <div>
-          <div className="text-lg font-semibold">ChatMe Pro</div>
-          <div className="text-sm text-gray-500">v15.0.0</div>
-        </div>
+    <header className="ft-header">
+      <button className="icon-btn profile" aria-label="profile">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </button>
+
+      <div className="brand">
+        <span className="brand-name">FullTask</span>
+        <span className="brand-sub">AI Tutor Pro</span>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-indigo-100 to-white">PRO</div>
-        <AuthButton user={user} />
+
+      <div className="top-right">
+        <button className="icon-btn share" aria-label="share">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+        </button>
       </div>
-    </div>
+    </header>
   );
 }
