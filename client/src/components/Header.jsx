@@ -1,25 +1,28 @@
-import React from "react";
+import { Search, Mic, Image } from "lucide-react";
 
-const Header = () => {
+export function Header({ onSearch }) {
   return (
-    <div style={{
-      width: "100%",
-      padding: "18px 20px",
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      borderBottom: "1px solid #ddd",
-      background: "#f7f7f2"
-    }}>
-      <img src="/user-icon.svg" alt="user" width={26} />
+    <div className="flex items-center justify-between w-full border-b border-[#1f2024] px-6 py-4 bg-[#131417]">
+      
+      {/* Search bar */}
+      <div className="flex items-center gap-3 bg-[#1c1d21] px-4 py-3 rounded-2xl w-full max-w-3xl">
+        <Search size={18} className="opacity-60" />
+        <input
+          type="text"
+          placeholder="Ask anything…"
+          onKeyDown={(e) => e.key === "Enter" && onSearch(e.target.value)}
+          className="bg-transparent w-full outline-none"
+        />
+        <Mic size={18} className="opacity-60" />
+        <Image size={18} className="opacity-60" />
+      </div>
 
-      <h1 style={{ fontSize: 22, fontWeight: 600, color: "#0d2b4c" }}>
-        FullTask AI Tutor Pro
-      </h1>
-
-      <img src="/share.svg" alt="share" width={26} />
+      {/* Right buttons */}
+      <div className="flex items-center gap-4 ml-4">
+        <button className="px-4 py-2 bg-[#1c1d21] rounded-xl text-sm hover:bg-[#25262b]">
+          Upgrade
+        </button>
+      </div>
     </div>
   );
-};
-
-export default Header;
+}
