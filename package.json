@@ -1,17 +1,19 @@
 {
-  "name": "chatme",
+  "name": "fulltask-ai-tutor-pro",
   "version": "1.0.0",
-  "type": "module",
+  "private": true,
+  "workspaces": [
+    "client",
+    "backend"
+  ],
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node backend/server.js",
+    "server": "node backend/server.js",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "install-all": "npm install && npm install --prefix client && npm install --prefix backend"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "firebase-admin": "^12.0.0",
-    "openai": "^4.0.0",
-    "stripe": "^14.0.0"
+    "concurrently": "^8.2.2"
   }
 }
