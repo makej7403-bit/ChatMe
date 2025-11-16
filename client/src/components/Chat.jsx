@@ -1,44 +1,30 @@
-// client/src/components/Chat.jsx
-import { useState } from "react";
+import React, { useState } from "react";
 
 export default function Chat() {
   const [messages, setMessages] = useState([
-    {
-      role: "assistant",
-      content:
-        "Hello — ChatMe v15.0.0. Ask me anything or upload files. (Ask 'who created you?')",
-    },
+    { role: "assistant", text: "Hello — I'm FullTask AI Tutor Pro. How can I help?" }
   ]);
 
-  const handleSend = (text) => {
-    if (!text.trim()) return;
-
-    const userMsg = { role: "user", content: text };
-    const botMsg = {
-      role: "assistant",
-      content:
-        text.toLowerCase().includes("who created you")
-          ? "I was created by Akin S. Sokpah from Liberia using advanced OpenAI technology. ChatMe Pro was fully designed and developed by him."
-          : "Processing your request...",
-    };
-
-    setMessages((prev) => [...prev, userMsg, botMsg]);
-  };
-
   return (
-    <div className="flex flex-col gap-4">
-      {messages.map((msg, i) => (
-        <div
-          key={i}
-          className={`p-3 rounded-xl max-w-[80%] ${
-            msg.role === "assistant"
-              ? "bg-white shadow"
-              : "bg-blue-500 text-white ml-auto"
-          }`}
-        >
-          {msg.content}
-        </div>
-      ))}
+    <div className="w-full h-full px-4 md:px-32 py-10 flex flex-col items-center">
+
+      <div className="w-full max-w-3xl space-y-6">
+
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`w-full rounded-2xl p-5 ${
+              msg.role === "assistant"
+                ? "bg-white/5 border border-white/10"
+                : "bg-blue-500 text-white"
+            }`}
+          >
+            {msg.text}
+          </div>
+        ))}
+
+      </div>
+
     </div>
   );
 }
