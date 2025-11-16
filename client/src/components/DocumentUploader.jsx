@@ -1,25 +1,44 @@
-import React, { useState } from "react";
+import React from "react";
 
-export default function DocumentUploader({ apiBase = "" }) {
-  const [file, setFile] = useState(null);
-  const [meta, setMeta] = useState(null);
+const DocumentUpload = ({ onSend }) => {
+  const handleDoc = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-  async function upload(){
-    if (!file) return alert("Choose a document");
-    const fd = new FormData();
-    fd.append("doc", file);
-    const res = await fetch(`${apiBase}/api/upload-doc`, { method: "POST", body: fd });
-    const j = await res.json();
-    setMeta(j.meta || j);
-    alert("Document uploaded. You can now ask about it in chat.");
-  }
+    const form = new FormData();
+    form.append("document", file);
+
+    const res = await fetch(import.meta.env.VITE_API_URL + "/document", {
+      method: "POST",
+      body: form
+    });
+
+    const data = await res.json();
+    onSend(data.reply);
+  };
 
   return (
-    <div className="uploader">
-      <div style={{fontWeight:600}}>Document</div>
-      <input type="file" accept=".pdf,.txt" onChange={e=>setFile(e.target.files?.[0])} />
-      <div style={{marginTop:6}}><button onClick={upload} className="primary">Upload Document</button></div>
-      {meta && <pre style={{marginTop:6, fontSize:12}}>{JSON.stringify(meta, null, 2)}</pre>}
-    </div>
+    <>
+      <input
+        type="file"
+        id="doc-upload"
+        hidden
+        onChange={handleDoc}
+      />
+
+      <label
+        htmlFor="doc-upload"
+        style={{
+          background: "#0d2b4c",
+          color: "white",
+          padding: "12px 18px",
+          borderRadius: 40,
+        }}
+      >
+        📄 Document
+      </label>
+    </>
   );
-}
+};
+
+export default DocumentUpload;
