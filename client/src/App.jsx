@@ -4,7 +4,11 @@ import ChatInput from './components/ChatInput';
 import ChatView from './components/ChatView';
 import BottomNav from './components/BottomNav';
 import LiveCall from "./components/LiveCall";
-const App = () => {
+const App = () => { <Header />
+<ChatView messages={messages} />
+<ChatInput onSend={sendMessage} />
+<LiveCall />  {/* NEW */}
+<BottomNav />
   const [messages, setMessages] = useState([]);
 
   const sendMessage = async (text) => {
