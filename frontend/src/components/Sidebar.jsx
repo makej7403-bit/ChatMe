@@ -1,60 +1,25 @@
-import { useState } from "react";
-
-export default function Sidebar({ onSelect }) {
-  const [active, setActive] = useState("chat");
-
-  function select(name) {
-    setActive(name);
-    onSelect(name);
-  }
-
+// frontend/src/components/Sidebar.jsx
+export default function Sidebar() {
   return (
-    <aside className="w-64 h-full bg-gray-100 border-r p-4">
-      <h2 className="text-lg font-semibold mb-4">Menu</h2>
+    <div className="w-[260px] h-full bg-white border-r px-4 py-6 flex flex-col">
+      <h1 className="text-xl font-bold mb-6">ChatMe Pro</h1>
 
-      <nav className="flex flex-col gap-2">
-        <button
-          className={`p-2 rounded ${active === "chat" ? "bg-blue-500 text-white" : "bg-white"}`}
-          onClick={() => select("chat")}
-        >
-          AI Chat
-        </button>
-
-        <button
-          className={`p-2 rounded ${active === "image" ? "bg-blue-500 text-white" : "bg-white"}`}
-          onClick={() => select("image")}
-        >
-          Image Uploader
-        </button>
-
-        <button
-          className={`p-2 rounded ${active === "doc" ? "bg-blue-500 text-white" : "bg-white"}`}
-          onClick={() => select("doc")}
-        >
-          Document Uploader
-        </button>
-
-        <button
-          className={`p-2 rounded ${active === "voice" ? "bg-blue-500 text-white" : "bg-white"}`}
-          onClick={() => select("voice")}
-        >
-          Voice Recorder
-        </button>
-
-        <button
-          className={`p-2 rounded ${active === "call" ? "bg-blue-500 text-white" : "bg-white"}`}
-          onClick={() => select("call")}
-        >
-          Live Voice Call
-        </button>
-
-        <button
-          className={`p-2 rounded ${active === "premium" ? "bg-yellow-500 text-white" : "bg-white"}`}
-          onClick={() => select("premium")}
-        >
-          Premium Access
-        </button>
+      <nav className="flex flex-col gap-4">
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Conversational Chat</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Image Analyzer</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Document Q&A</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Voice Understanding</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Live AI Call</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Math Solver</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Code Generator</button>
+        <button className="p-2 hover:bg-gray-100 rounded-lg text-left">Language Translator</button>
       </nav>
-    </aside>
+
+      <div className="mt-auto pt-6 border-t">
+        <button className="w-full bg-black text-white py-2 rounded-xl">
+          Upgrade to Pro
+        </button>
+      </div>
+    </div>
   );
 }
