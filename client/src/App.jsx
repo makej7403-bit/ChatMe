@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import ChatInput from './components/ChatInput';
 import ChatView from './components/ChatView';
+import BottomNav from './components/BottomNav';
 
 const App = () => {
   const [messages, setMessages] = useState([]);
@@ -24,7 +25,6 @@ const App = () => {
 
       setMessages((prev) => [...prev, aiMsg]);
     } catch (err) {
-      console.error(err);
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: "Error: Could not connect to server." }
@@ -37,6 +37,7 @@ const App = () => {
       <Header />
       <ChatView messages={messages} />
       <ChatInput onSend={sendMessage} />
+      <BottomNav />
     </div>
   );
 };
