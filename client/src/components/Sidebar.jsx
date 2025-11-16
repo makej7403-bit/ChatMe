@@ -1,31 +1,37 @@
 import React from "react";
+import { Home, Compass, Book, Settings } from "lucide-react";
 
-export default function Sidebar() {
+export default function Sidebar({ onSelect }) {
   return (
-    <div className="flex flex-col w-full h-full p-4 text-white">
+    <div className="h-full w-64 bg-[#0d1117] border-r border-[#1b2230] flex flex-col py-6 px-4">
 
-      <h1 className="text-xl font-semibold mb-6 opacity-70">
-        FullTask AI Tutor Pro
+      <h1 className="text-white text-2xl font-bold mb-8">
+        FullTask <span className="text-blue-500">AI Tutor Pro</span>
       </h1>
 
-      <button className="mb-3 text-left px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl transition">
-        + New Chat
-      </button>
+      <nav className="flex flex-col space-y-2">
+        <SidebarItem icon={<Home />} text="Home" onClick={() => onSelect("home")} />
+        <SidebarItem icon={<Compass />} text="Discover" onClick={() => onSelect("discover")} />
+        <SidebarItem icon={<Book />} text="Library" onClick={() => onSelect("library")} />
+        <SidebarItem icon={<Settings />} text="Settings" onClick={() => onSelect("settings")} />
+      </nav>
 
-      <div className="mt-6 opacity-60 text-sm">
-        History
-      </div>
-
-      <div className="flex-1 mt-3 space-y-2 text-white/70 text-sm">
-        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Today</p>
-        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Yesterday</p>
-        <p className="hover:bg-white/10 p-2 rounded-lg cursor-pointer">Last 7 days</p>
-      </div>
-
-      <div className="mt-auto opacity-60 text-sm">
-        Settings
+      <div className="mt-auto pt-6 border-t border-[#1b2230] text-gray-400 text-sm">
+        © 2025 FullTask AI Tutor Pro
       </div>
 
     </div>
+  );
+}
+
+function SidebarItem({ icon, text, onClick }) {
+  return (
+    <button
+      onClick={onClick}
+      className="flex items-center gap-3 text-gray-300 hover:text-white hover:bg-[#1a2332] px-3 py-2 rounded-xl transition"
+    >
+      {icon}
+      <span>{text}</span>
+    </button>
   );
 }
