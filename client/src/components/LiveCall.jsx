@@ -1,71 +1,140 @@
-import React, { useRef, useState } from "react";
+import React, { useState, useRef } from "react";
 
-export default function LiveCall({ apiBase = "" }) {
-  const wsRef = useRef(null);
-  const recorderRef = useRef(null);
-  const [connected, setConnected] = useState(false);
-  const [log, setLog] = useState([]);
+const LiveCall = () => {
+  const [active, setActive] = useState(false);
+  const [transcript, setTranscript] = useState([]);
+  const socketRef = useRef(null);
+  const mediaRecorderRef = useRef(null);
+  const audioChunks = useRef([]);
 
-  function addLog(t){ setLog(s=>[...s, t].slice(-40)); }
+  const startCall = async () => {
+    setActive(true);
 
-  async function startCall(){
-    const url = (apiBase || "") + "/ws";
-    const socket = new WebSocket(url.replace(/\/\//,"/"));
-    wsRef.current = socket;
+    // 1. Connect WebSocket
+    socketRef.current = new WebSocket(import.meta.env.VITE_API_WS + "/live");
 
-    socket.onopen = ()=>{ setConnected(true); addLog("WS open"); };
-    socket.onmessage = (ev)=> {
-      try {
-        const m = JSON.parse(ev.data);
-        if (m.type === "reply") { addLog("AI: "+ m.payload.text); speak(m.payload.text); }
-        else if (m.type === "transcript") addLog("Transcribed: "+ (m.payload.text||""));
-        else if (m.type === "error") addLog("Error: "+m.payload.message);
-      } catch(e){ addLog("Msg: "+ev.data); }
+    socketRef.current.onmessage = (event) => {
+      setTranscript((prev) => [...prev, { role: "ai", text: event.data }]);
     };
-    socket.onclose = ()=>{ setConnected(false); addLog("WS closed"); };
 
-    // start mic
+    // 2. Start Mic
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
-    recorderRef.current = mr;
-    mr.ondataavailable = (e)=>{
-      if (socket.readyState !== WebSocket.OPEN) return;
-      const reader = new FileReader();
-      reader.onload = ()=> {
-        const base64 = reader.result.split(",")[1];
-        socket.send(JSON.stringify({ type: "audio-chunk", payload: { audioBase64: base64, mime: "audio/webm" } }));
-        addLog("Sent chunk");
-      };
-      reader.readAsDataURL(e.data);
+    mediaRecorderRef.current = new MediaRecorder(stream);
+
+    mediaRecorderRef.current.ondataavailable = (e) => {
+      socketRef.current.send(e.data);
     };
-    mr.start(900); // chunk ~900ms
-    addLog("Started streaming audio");
-  }
 
-  function stopCall(){
-    if (recorderRef.current) recorderRef.current.stop();
-    if (wsRef.current) wsRef.current.close();
-    setConnected(false);
-    addLog("Call stopped");
-  }
+    mediaRecorderRef.current.start(300); // send chunks every 300ms
+    setTranscript([{ role: "system", text: "Live AI Call Started..." }]);
+  };
 
-  function speak(text){
-    if (!("speechSynthesis" in window)) return;
-    const u = new SpeechSynthesisUtterance(text);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(u);
-  }
+  const stopCall = () => {
+    setActive(false);
+    mediaRecorderRef.current?.stop();
+    socketRef.current?.close();
+    setTranscript((prev) => [
+      ...prev,
+      { role: "system", text: "Call Ended." }
+    ]);
+  };
+
+  if (!active)
+    return (
+      <button
+        onClick={startCall}
+        style={{
+          position: "fixed",
+          bottom: "100px",
+          right: "25px",
+          background: "#0d2b4c",
+          color: "white",
+          padding: "16px 30px",
+          borderRadius: 40,
+          border: "none",
+          fontSize: 17,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.25)"
+        }}
+      >
+        🎧 Start Live AI Call
+      </button>
+    );
 
   return (
-    <div className="uploader">
-      <div style={{fontWeight:600}}>Live Call</div>
-      <div style={{display:"flex", gap:8}}>
-        <button onClick={startCall} className="primary" disabled={connected}>Start Call</button>
-        <button onClick={stopCall} style={{background:"#ef4444", color:"#fff", border:"none", padding:"8px 10px", borderRadius:6}} disabled={!connected}>Stop</button>
+    <div
+      style={{
+        position: "fixed",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        background: "#ffffff",
+        height: "60%",
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+        boxShadow: "0 -4px 20px rgba(0,0,0,0.25)",
+        padding: "20px",
+        overflowY: "auto",
+      }}
+    >
+      <h2 style={{ fontWeight: 700 }}>Live AI Call</h2>
+
+      {/* waveform animation */}
+      <div
+        style={{
+          height: 40,
+          display: "flex",
+          gap: 6,
+          margin: "16px 0",
+        }}
+      >
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              width: 6,
+              height: Math.random() * 30 + 10,
+              background: "#0d2b4c",
+              borderRadius: 4,
+              animation: "pulse 0.6s infinite ease",
+            }}
+          />
+        ))}
       </div>
-      <div style={{marginTop:8, maxHeight:160, overflow:"auto"}}>
-        {log.map((l,i)=><div key={i} style={{fontSize:12}}>{l}</div>)}
+
+      {/* transcript */}
+      <div>
+        {transcript.map((msg, i) => (
+          <p
+            key={i}
+            style={{
+              padding: "8px 12px",
+              background: msg.role === "ai" ? "#e6f0ff" : "#eee",
+              borderRadius: 10,
+              marginBottom: 8,
+            }}
+          >
+            {msg.text}
+          </p>
+        ))}
       </div>
+
+      <button
+        onClick={stopCall}
+        style={{
+          marginTop: 20,
+          width: "100%",
+          padding: "14px 0",
+          background: "#b42323",
+          color: "white",
+          border: "none",
+          borderRadius: 12,
+          fontSize: 16,
+        }}
+      >
+        ⛔ End Call
+      </button>
     </div>
   );
-}
+};
+
+export default LiveCall;
