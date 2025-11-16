@@ -7,7 +7,7 @@ app.use(cors());
 app.use(express.json());
 
 // API routes
-app.use("/api/ai", require("./backend/routes/ai.js")); 
+app.use("/api/ai", require("./backend/routes/ai.js"));
 app.use("/api/features", require("./backend/routes/feature.js"));
 
 // Serve frontend
