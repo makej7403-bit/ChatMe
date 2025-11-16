@@ -1,12 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* PRO colors */
-:root{
-  --bg: #f8fafc;
-  --card: #ffffff;
-  --muted: #6b7280;
-  --accent: #2563eb;
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  background: #f7f7f8;
+  font-family: 'Inter', sans-serif;
 }
-body { background: var(--bg); font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+
+* {
+  box-sizing: border-box;
+}
