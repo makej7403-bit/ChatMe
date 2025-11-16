@@ -1,24 +1,35 @@
-const path = require("path");
-const express = require("express");
-const cors = require("cors");
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import cors from "cors";
+
+// Fix __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-app.use(cors());
+
+// Middlewares
 app.use(express.json());
+app.use(cors());
 
-// API routes
-app.use("/api/ai", require("./backend/routes/ai.js"));
-app.use("/api/features", require("./backend/routes/feature.js"));
+// Import routes (ESM)
+import aiRoutes from "./backend/routes/ai.js";
+import authRoutes from "./backend/routes/auth.js";
+import paymentRoutes from "./backend/routes/payment.js";
 
-// Serve frontend
-app.use(express.static(path.join(__dirname, "client", "dist")));
+app.use("/api/ai", aiRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/payment", paymentRoutes);
+
+// --- Serve client build ---
+app.use(express.static(path.join(__dirname, "client/dist")));
 
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "client", "dist", "index.html"));
+  res.sendFile(path.join(__dirname, "client/dist/index.html"));
 });
 
-// Start
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("Server running on port", PORT);
 });
