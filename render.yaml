@@ -1,15 +1,14 @@
 services:
   - type: web
-    name: chatme
+    name: fulltask-ai
     env: node
-    branch: main
-    rootDir: .
     buildCommand: |
+      cd client
       npm install
-      cd frontend && npm install && npm run build
+      npm run build
+      cd ..
+      npm install
     startCommand: node server.js
     envVars:
       - key: NODE_VERSION
-        value: 20.11.1
-      - key: FIREBASE_SERVICE_ACCOUNT
-        sync: false
+        value: 20.19.0
